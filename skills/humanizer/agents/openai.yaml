@@ -1,0 +1,4 @@
+interface:
+  display_name: "Humanizer"
+  short_description: "Humanize academic prose naturally"
+  default_prompt: "Use $humanizer to humanize this text while preserving evidence, citations, and my academic voice:"

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Suda Thesis"
+  short_description: "Generate Suzhou University thesis DOCX"
+  icon_small: "./assets/icon-small.png"
+  icon_large: "./assets/icon-large.png"
+  default_prompt: "Use $suda-thesis to generate a Suzhou University thesis body, literature review, literature translation, task book, or midterm-check DOCX."
