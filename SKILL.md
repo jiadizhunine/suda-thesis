@@ -73,11 +73,14 @@ literature translation, task book, and midterm-check form.
 ## Standard Workflow
 
 1. Gather the topic, document type, output directory, source materials, reference list
-   expectations, and figure availability. For translation, also gather the exact source
-   paper/PDF. For thesis body, gather the actual experimental protocol and observations.
-   For task book and midterm-check forms, gather the form fields: college, topic, student,
-   major, grade, advisor, dates, project type, completed work, remaining work, problems,
-   solutions, schedule, and any required placeholder signatures.
+   expectations, and figure availability. For translation, start from the user's topic
+   direction or thesis title; if the user provides an exact source paper/PDF, use it, and
+   otherwise search for and verify a real English article before translating it. For
+   thesis body, gather the actual experimental protocol and observations. For task book
+   and midterm-check forms, start from the topic direction plus the user's existing
+   results or progress; gather college, major, student, advisor, dates, project type,
+   schedule, and signature fields when available, and use placeholders for missing
+   identity/date fields.
 2. Read only the resources needed for the current task:
    - For thesis body, literature review, and long translation tasks, inspect
      `scripts/split_pattern/create_thesis_docx.py` and

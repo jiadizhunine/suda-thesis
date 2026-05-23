@@ -83,14 +83,14 @@ Invoke the skill explicitly:
 Use $suda-thesis to generate a Suzhou University thesis body DOCX.
 ```
 
-In practice, start from the materials you already have:
+In practice, start from the topic direction or results you already have:
 
 | Target Document | Materials To Provide | Example Request |
 | --- | --- | --- |
-| Literature review | Research direction or thesis title, review scope, reference expectations | `Use $suda-thesis to generate a Suzhou University literature review DOCX based on my research direction: "...".` |
-| Literature translation | A real article PDF/link/full text and formatting requirements | `Use $suda-thesis to translate this real English article into a Suzhou University literature translation DOCX.` |
+| Literature review | Research direction or thesis title | `Use $suda-thesis to generate a Suzhou University literature review DOCX based on my research direction: "...".` |
+| Literature translation | Research direction or thesis title; if no source article is provided, search for and verify a real English article first | `Use $suda-thesis to find a real English article for my topic direction, then generate a Suzhou University literature translation DOCX.` |
 | Thesis body | Thesis title, experimental/survey results, result figures, captions, methods/materials | `Use $suda-thesis to generate a thesis body DOCX from my title, result figures, and findings.` |
-| Task book / midterm-check | Topic, school/major fields, student/advisor fields, schedule or progress notes | `Use $suda-thesis to generate the task book and midterm-check form from these fields.` |
+| Task book / midterm-check | Research direction or topic, plus existing results or progress | `Use $suda-thesis to generate the task book and midterm-check form from my topic direction and results.` |
 
 Other examples:
 
