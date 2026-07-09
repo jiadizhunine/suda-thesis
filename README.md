@@ -16,10 +16,11 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v1.0-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-v1.0.1-blue" alt="Version">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
   <img src="https://img.shields.io/badge/platform-Codex%20%7C%20Claude_Code-purple" alt="Platform">
   <img src="https://img.shields.io/badge/output-DOCX-orange" alt="DOCX">
+  <img src="https://github.com/jiadizhunine/suda-thesis/actions/workflows/ci.yml/badge.svg" alt="CI">
 </p>
 
 ---
@@ -53,16 +54,26 @@
 
 ## 安装方法
 
+运行脚本需要 Python 3.9 或更高版本，依赖项记录在 `requirements.txt` 中。以下
+macOS/Linux 命令会在每份仓库 clone 内建立 `.venv`；依赖不会写入系统 Python，
+因此也兼容启用 PEP 668 的环境。
+
 ### Codex
 
 ```bash
+mkdir -p ~/.codex/skills
 git clone https://github.com/jiadizhunine/suda-thesis.git ~/.codex/skills/suda-thesis
+python3 -m venv ~/.codex/skills/suda-thesis/.venv
+~/.codex/skills/suda-thesis/.venv/bin/python -m pip install -r ~/.codex/skills/suda-thesis/requirements.txt
 ```
 
 ### Claude Code
 
 ```bash
+mkdir -p ~/.claude/skills
 git clone https://github.com/jiadizhunine/suda-thesis.git ~/.claude/skills/suda-thesis
+python3 -m venv ~/.claude/skills/suda-thesis/.venv
+~/.claude/skills/suda-thesis/.venv/bin/python -m pip install -r ~/.claude/skills/suda-thesis/requirements.txt
 ```
 
 ### 同时用于 Codex 和 Claude Code
@@ -70,7 +81,10 @@ git clone https://github.com/jiadizhunine/suda-thesis.git ~/.claude/skills/suda-
 如果你希望两边始终读取同一份本地 skill，可以只 clone 一份，再为另一个工具建立软链接：
 
 ```bash
+mkdir -p ~/skills ~/.codex/skills ~/.claude/skills
 git clone https://github.com/jiadizhunine/suda-thesis.git ~/skills/suda-thesis
+python3 -m venv ~/skills/suda-thesis/.venv
+~/skills/suda-thesis/.venv/bin/python -m pip install -r ~/skills/suda-thesis/requirements.txt
 ln -sfn ~/skills/suda-thesis ~/.codex/skills/suda-thesis
 ln -sfn ~/skills/suda-thesis ~/.claude/skills/suda-thesis
 ```
@@ -123,10 +137,22 @@ flowchart TD
   G --> H["复核后交付最终 DOCX"]
 ```
 
+正文示例会将中英文摘要和目录按小写罗马数字编页，正文另起一节并从 `-1-` 重新编页。脚本会标记目录域在打开时刷新；替换正文或图片后，仍应在 Word 或其他支持域更新的编辑器中更新目录并复核页码。
+
+`scripts/split_pattern/` 中的示例不附带 13 张论文图片；直接运行时会输出缺图警告，并在 DOCX 中保留红色的待插图占位。这些占位、示例数据和示例参考文献都必须在正式交付前替换。
+
+## 本地验证
+
+```bash
+.venv/bin/python -m py_compile scripts/split_pattern/*.py tests/*.py
+.venv/bin/python -m unittest discover -s tests -v
+```
+
 ## 项目结构
 
 ```text
 suda-thesis/
+├── .github/workflows/ci.yml
 ├── SKILL.md
 ├── agents/openai.yaml
 ├── assets/
@@ -136,13 +162,15 @@ suda-thesis/
 │   ├── format-standards.md
 │   ├── forms.md
 │   └── pitfalls.md
+├── requirements.txt
 ├── scripts/split_pattern/
-└── skills/humanizer/
+├── skills/humanizer/
+└── tests/
 ```
 
 ## 发布状态
 
-- 当前版本：[`v1.0`](https://github.com/jiadizhunine/suda-thesis/releases/tag/v1.0)
+- 当前版本：[`v1.0.1`](https://github.com/jiadizhunine/suda-thesis/releases/tag/v1.0.1)
 - 仓库地址：[github.com/jiadizhunine/suda-thesis](https://github.com/jiadizhunine/suda-thesis)
 
 ## 致谢

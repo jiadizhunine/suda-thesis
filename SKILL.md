@@ -26,6 +26,7 @@ content parts.
 - `references/forms.md`: task-book and midterm-check field structure, writing rules, and
   table/form review checklist.
 - `references/pitfalls.md`: known failure modes and exact code patterns to avoid.
+- `requirements.txt`: Python 3.9+ runtime dependencies for the bundled DOCX scaffold.
 
 ## Supported Documents
 
@@ -112,26 +113,42 @@ literature translation, task book, and midterm-check form.
    script should import from `content_data.py`, not from each content part directly.
 7. Run syntax checks and generate the document.
 
+   Use Python 3.9 or later. On macOS/Linux, create a repository-local `.venv` instead of
+   installing into the system Python; this is compatible with PEP 668. Set
+   `SUDA_THESIS_ROOT` to the installed clone and keep using that clone's interpreter when
+   the scaffold is copied to another output directory:
+
+   ```bash
+   SUDA_THESIS_ROOT=/path/to/suda-thesis
+   python3 -m venv "$SUDA_THESIS_ROOT/.venv"
+   "$SUDA_THESIS_ROOT/.venv/bin/python" -m pip install -r "$SUDA_THESIS_ROOT/requirements.txt"
+   ```
+
    For long split documents:
 
    ```bash
-   python3 -m py_compile content_part*.py content_data.py create_*_docx.py
-   python3 create_*_docx.py
+   "$SUDA_THESIS_ROOT/.venv/bin/python" -m py_compile content_part*.py content_data.py create_*_docx.py
+   "$SUDA_THESIS_ROOT/.venv/bin/python" create_*_docx.py
    ```
 
    For form documents:
 
    ```bash
-   python3 -m py_compile create_task_book_docx.py
-   python3 create_task_book_docx.py
+   "$SUDA_THESIS_ROOT/.venv/bin/python" -m py_compile create_task_book_docx.py
+   "$SUDA_THESIS_ROOT/.venv/bin/python" create_task_book_docx.py
    # or
-   python3 -m py_compile create_midterm_check_docx.py
-   python3 create_midterm_check_docx.py
+   "$SUDA_THESIS_ROOT/.venv/bin/python" -m py_compile create_midterm_check_docx.py
+   "$SUDA_THESIS_ROOT/.venv/bin/python" create_midterm_check_docx.py
    ```
 
 8. Run the review-regenerate loop below. If any issue is found, fix the relevant content
    part, form data constants, figure map, reference list, or assembly script; regenerate
    the DOCX; then review again.
+9. Refresh and verify fields after the final pagination-affecting change. Thesis front
+   matter uses lowercase Roman page numbers; the body starts a new section at `-1-`.
+   Mark TOC/PAGEREF fields dirty and set `w:updateFields`, but do not assume every renderer
+   honors those flags. Update the TOC in Word or another field-aware editor, or compare the
+   cached page numbers with the latest rendered pages before delivery.
 
 ## Split Pattern Contract
 
@@ -300,8 +317,9 @@ Before delivering the document, confirm the final loop pass:
 
 - Long-document formatting: CJK fonts set through XML, first-line indent uses
   `firstLineChars='200'`, heading spacing uses `beforeLines='100'` and
-  `afterLines='100'`, TOC field code is correct, captions are 12 pt, and metadata is
-  erased.
+  `afterLines='100'`, front matter uses lowercase Roman page numbers, the thesis body
+  restarts at `-1-`, TOC field code and cached pages are correct, captions are 12 pt, and
+  metadata is erased.
 - Content: abstract matches the chapters, transitions are natural, conclusion answers
   the document's opening questions, and thesis/review prose has passed the bundled
   humanizer.
