@@ -2,12 +2,7 @@
 name: humanizer
 description: Use when the user asks to humanize text, remove AI tone, make writing sound less robotic, match a writing sample, polish prose without sounding corporate, audit AI-like writing patterns, or improve Chinese/English academic writing while preserving meaning, evidence, citations, and intended voice.
 license: MIT
-allowed-tools:
-  - Read
-  - Write
-  - Edit
-  - Grep
-  - Glob
+allowed-tools: Read Write Edit Grep Glob
 ---
 
 # Humanizer: Remove AI Writing Patterns
@@ -412,17 +407,17 @@ Avoiding AI patterns is only half the job. Sterile, voiceless writing is just as
 > The company plans to open two more locations next year.
 
 
-### 26. Hyphenated Word Pair Overuse
+### 26. Stacked Compound Modifiers
 
-**Words to watch:** third-party, cross-functional, client-facing, data-driven, decision-making, well-known, high-quality, real-time, long-term, end-to-end
+**Words to watch:** strings of modifiers such as third-party, cross-functional, client-facing, data-driven, real-time, long-term, and end-to-end
 
-**Problem:** AI hyphenates common word pairs with perfect consistency. Humans rarely hyphenate these uniformly, and when they do, it's inconsistent. Less common or technical compound modifiers are fine to hyphenate.
+**Problem:** AI writing often stacks several compound modifiers into one sentence. Simplify the sentence when those labels obscure the subject or action. Do not remove hyphens mechanically: keep standard hyphenation when grammar or the target style guide requires it, especially for compound modifiers before a noun.
 
 **Before:**
 > The cross-functional team delivered a high-quality, data-driven report on our client-facing tools. Their decision-making process was well-known for being thorough and detail-oriented.
 
 **After:**
-> The cross functional team delivered a high quality, data driven report on our client facing tools. Their decision making process was known for being thorough and detail oriented.
+> The team delivered a careful report based on data from the tools used by clients. Its decisions were thorough and well documented.
 
 
 ### 27. Persuasive Authority Tropes

@@ -4,6 +4,11 @@ This file contains all Python formatting code for generating Suzhou University t
 documents with python-docx. Read this file when writing formatting functions for any
 document type.
 
+The defaults follow the university's public 2020
+[binding and print format](https://ssis.suda.edu.cn/_upload/article/files/9c/fe/39e8a21c4d8cb8f549fba938f226/1036d39f-3840-40be-8871-5e50e7fc8550.pdf).
+Department templates may add or replace requirements, so verify the user's current sample
+before final delivery.
+
 ## Table of Contents
 
 1. [Required Imports](#1-required-imports)
@@ -28,6 +33,7 @@ import sys, os, re, datetime
 from docx import Document
 from docx.shared import Pt, Cm, Inches, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.section import WD_SECTION
 from docx.oxml.ns import qn, nsdecls
 from docx.oxml import parse_xml
 from docx.opc.constants import RELATIONSHIP_TYPE as RT
@@ -91,7 +97,10 @@ hp_pPr.append(pBdr)
 ```
 
 **Footer rules**:
-- Thesis Body: Arabic page numbers `-1-`, `-2-`, `-3-`..., centered, continuous
+- Thesis Body front matter (Chinese abstract, English abstract, and TOC): lowercase Roman
+  page numbers `i`, `ii`, `iii`..., centered
+- Thesis Body: start a new section at the body, restart Arabic page numbers at `-1-`, and
+  continue that sequence through references, appendices, and acknowledgement
 - Translation & Review: No page numbers (empty footer)
 
 ```python
@@ -99,8 +108,34 @@ footer = section.footer
 footer.is_linked_to_previous = False
 fp = footer.paragraphs[0]
 fp.alignment = WD_ALIGN_PARAGRAPH.CENTER
-# Thesis Body: insert "-" + PAGE field + "-" for -N- format
+# Front matter: lowerRoman pgNumType + PAGE field without dashes
+# Thesis body: new section, decimal pgNumType starting at 1,
+# then insert "-" + PAGE field + "-" for -N- format
 # Translation/Review: leave footer empty
+```
+
+Use a section-level `w:pgNumType` and a real section break; a page break alone cannot
+restart numbering:
+
+```python
+def set_page_numbering(section, number_format, start=1):
+    sectPr = section._sectPr
+    pg_num_type = sectPr.find(qn('w:pgNumType'))
+    if pg_num_type is None:
+        pg_num_type = parse_xml(f'<w:pgNumType {nsdecls("w")}/>')
+        # BaseOxmlElement helper: keep CT_SectPr child order schema-valid.
+        sectPr.insert_element_before(
+            pg_num_type,
+            'w:cols', 'w:formProt', 'w:vAlign', 'w:noEndnote', 'w:titlePg',
+            'w:textDirection', 'w:bidi', 'w:rtlGutter', 'w:docGrid',
+            'w:printerSettings', 'w:sectPrChange',
+        )
+    pg_num_type.set(qn('w:fmt'), number_format)
+    pg_num_type.set(qn('w:start'), str(start))
+
+set_page_numbering(doc.sections[0], 'lowerRoman', start=1)
+body_section = doc.add_section(WD_SECTION.NEW_PAGE)
+set_page_numbering(body_section, 'decimal', start=1)
 ```
 
 ## 3.5. Non-Chapter Heading (References, Acknowledgement)
@@ -255,6 +290,11 @@ Uses Word native field codes for auto-updating:
 
 Each entry links to a bookmark on its corresponding heading.
 
+Set `w:dirty="true"` on the TOC and PAGEREF field starts and add
+`<w:updateFields w:val="true"/>` to `word/settings.xml`. This requests recalculation in
+field-aware editors. It is not a substitute for checking the cached values: headless
+renderers may ignore the refresh flag, so cached page numbers must match the latest render.
+
 ## 9. Bookmark System
 
 ```python
@@ -320,10 +360,11 @@ def add_references(doc, refs):
 
 ## 12. Metadata Erasure
 
-python-docx writes fingerprints into core properties and app.xml. All traces must be
-erased before saving — visible in File > Properties in Word. Apply this to every
-generated DOCX type, including thesis body, literature review, literature translation,
-task book, and midterm-check form.
+python-docx writes identifying defaults into core properties and app.xml. Clear personal
+and descriptive fields, and normalize application compatibility fields before saving;
+these values are visible in File > Properties in Word. Apply this to every generated DOCX
+type, including thesis body, literature review, literature translation, task book, and
+midterm-check form.
 
 ```python
 # Place BEFORE doc.save()
@@ -340,10 +381,11 @@ core.identifier = ''
 core.language = ''
 core.version = ''
 core.revision = 1
-core.created = datetime.datetime.now()
-core.modified = datetime.datetime.now()
+now_utc = datetime.datetime.now(datetime.timezone.utc)
+core.created = now_utc
+core.modified = now_utc
 
-# Patch app.xml. Do not leave tool, company, or manager fingerprints.
+# Patch app.xml. Do not leave tool-specific, company, or manager fingerprints.
 app_part = doc.part.package.part_related_by(RT.EXTENDED_PROPERTIES)
 app_root = etree.fromstring(app_part.blob)
 ns = {'ep': 'http://schemas.openxmlformats.org/officeDocument/2006/extended-properties'}

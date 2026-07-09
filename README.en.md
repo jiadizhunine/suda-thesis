@@ -16,10 +16,11 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v1.0-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-v1.0.1-blue" alt="Version">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
   <img src="https://img.shields.io/badge/platform-Codex%20%7C%20Claude_Code-purple" alt="Platform">
   <img src="https://img.shields.io/badge/output-DOCX-orange" alt="DOCX">
+  <img src="https://github.com/jiadizhunine/suda-thesis/actions/workflows/ci.yml/badge.svg" alt="CI">
 </p>
 
 ---
@@ -53,16 +54,26 @@ This repository is a single-source skill package. Codex and Claude Code both use
 
 ## Install
 
+The scripts require Python 3.9 or later. Runtime dependencies are listed in
+`requirements.txt`. The macOS/Linux commands below create `.venv` inside each repository
+clone, so they do not modify the system Python and remain compatible with PEP 668.
+
 ### Codex
 
 ```bash
+mkdir -p ~/.codex/skills
 git clone https://github.com/jiadizhunine/suda-thesis.git ~/.codex/skills/suda-thesis
+python3 -m venv ~/.codex/skills/suda-thesis/.venv
+~/.codex/skills/suda-thesis/.venv/bin/python -m pip install -r ~/.codex/skills/suda-thesis/requirements.txt
 ```
 
 ### Claude Code
 
 ```bash
+mkdir -p ~/.claude/skills
 git clone https://github.com/jiadizhunine/suda-thesis.git ~/.claude/skills/suda-thesis
+python3 -m venv ~/.claude/skills/suda-thesis/.venv
+~/.claude/skills/suda-thesis/.venv/bin/python -m pip install -r ~/.claude/skills/suda-thesis/requirements.txt
 ```
 
 ### Shared Local Source
@@ -70,7 +81,10 @@ git clone https://github.com/jiadizhunine/suda-thesis.git ~/.claude/skills/suda-
 To keep Codex and Claude Code on the same local source:
 
 ```bash
+mkdir -p ~/skills ~/.codex/skills ~/.claude/skills
 git clone https://github.com/jiadizhunine/suda-thesis.git ~/skills/suda-thesis
+python3 -m venv ~/skills/suda-thesis/.venv
+~/skills/suda-thesis/.venv/bin/python -m pip install -r ~/skills/suda-thesis/requirements.txt
 ln -sfn ~/skills/suda-thesis ~/.codex/skills/suda-thesis
 ln -sfn ~/skills/suda-thesis ~/.claude/skills/suda-thesis
 ```
@@ -114,21 +128,35 @@ flowchart TD
   G --> H["Review and deliver final DOCX"]
 ```
 
+The thesis scaffold numbers the Chinese abstract, English abstract, and contents pages with lowercase Roman numerals. The thesis body starts a new section at `-1-`. The generator marks TOC fields for refresh when the document opens; after replacing prose or figures, update the TOC in Word or another field-aware editor and verify every page number.
+
+The repository does not bundle the scaffold's 13 thesis figures. A direct run prints a warning for each missing image and leaves a red insertion placeholder in the DOCX. Replace those placeholders, the example data, and the example references before delivery.
+
+## Local validation
+
+```bash
+.venv/bin/python -m py_compile scripts/split_pattern/*.py tests/*.py
+.venv/bin/python -m unittest discover -s tests -v
+```
+
 ## Repository Layout
 
 ```text
 suda-thesis/
+├── .github/workflows/ci.yml
 ├── SKILL.md
 ├── agents/openai.yaml
 ├── assets/
 ├── references/
+├── requirements.txt
 ├── scripts/split_pattern/
-└── skills/humanizer/
+├── skills/humanizer/
+└── tests/
 ```
 
 ## Release
 
-- Current release: [`v1.0`](https://github.com/jiadizhunine/suda-thesis/releases/tag/v1.0)
+- Current release: [`v1.0.1`](https://github.com/jiadizhunine/suda-thesis/releases/tag/v1.0.1)
 - Repository: [github.com/jiadizhunine/suda-thesis](https://github.com/jiadizhunine/suda-thesis)
 
 ## Acknowledgements

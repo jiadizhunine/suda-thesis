@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 生成示例论文正文.docx — 匿名 scaffold
-格式严格参照苏州大学本科毕业论文规范。
+默认格式参照苏州大学 2020 年公开的本科毕业论文规范。
 """
 
 import os
@@ -10,6 +10,7 @@ import sys
 from docx import Document
 from docx.shared import Pt, Cm, Inches, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.section import WD_SECTION
 from docx.oxml.ns import qn, nsdecls
 from docx.oxml import parse_xml
 import lxml.etree as etree
@@ -46,8 +47,7 @@ FOOTER_DISTANCE = Cm(2.0)
 # 文档格式函数（复用文献综述格式）
 # ============================================================
 
-def setup_page(doc):
-    section = doc.sections[0]
+def _setup_section_page(section):
     section.page_width = Cm(21)
     section.page_height = Cm(29.7)
     section.top_margin = MARGIN_TOP
@@ -60,6 +60,67 @@ def setup_page(doc):
     pgMar = sectPr.find(qn('w:pgMar'))
     if pgMar is not None:
         pgMar.set(qn('w:gutter'), str(int(GUTTER.emu / 635)))
+
+
+def setup_page(doc):
+    _setup_section_page(doc.sections[0])
+
+
+def _set_page_numbering(section, number_format, start=1):
+    sectPr = section._sectPr
+    pg_num_type = sectPr.find(qn('w:pgNumType'))
+    if pg_num_type is None:
+        pg_num_type = parse_xml(f'<w:pgNumType {nsdecls("w")}/>')
+        # CT_SectPr requires pgNumType before cols and all later section properties.
+        sectPr.insert_element_before(
+            pg_num_type,
+            'w:cols',
+            'w:formProt',
+            'w:vAlign',
+            'w:noEndnote',
+            'w:titlePg',
+            'w:textDirection',
+            'w:bidi',
+            'w:rtlGutter',
+            'w:docGrid',
+            'w:printerSettings',
+            'w:sectPrChange',
+        )
+    pg_num_type.set(qn('w:fmt'), number_format)
+    pg_num_type.set(qn('w:start'), str(start))
+
+
+def enable_field_updates(doc):
+    settings = doc.settings.element
+    update_fields = settings.find(qn('w:updateFields'))
+    if update_fields is None:
+        update_fields = parse_xml(f'<w:updateFields {nsdecls("w")}/>')
+        # CT_Settings requires updateFields before compat and the remaining settings.
+        settings.insert_element_before(
+            update_fields,
+            'w:hdrShapeDefaults',
+            'w:footnotePr',
+            'w:endnotePr',
+            'w:compat',
+            'w:docVars',
+            'w:rsids',
+            'm:mathPr',
+            'w:attachedSchema',
+            'w:themeFontLang',
+            'w:clrSchemeMapping',
+            'w:doNotIncludeSubdocsInStats',
+            'w:doNotAutoCompressPictures',
+            'w:forceUpgrade',
+            'w:captions',
+            'w:readModeInkLockDown',
+            'w:smartTagType',
+            'sl:schemaLibrary',
+            'w:shapeDefaults',
+            'w:doNotEmbedSmartTags',
+            'w:decimalSymbol',
+            'w:listSeparator',
+        )
+    update_fields.set(qn('w:val'), 'true')
 
 
 def setup_doc_defaults(doc):
@@ -171,7 +232,6 @@ def setup_styles(doc):
     h2_rf.set(qn('w:eastAsia'), '宋体')
 
     # ---------- TOC 样式（完全匹配参考论文） ----------
-    from docx.enum.style import WD_STYLE_TYPE
     # 直接操作 styles.xml 创建内置TOC样式（不使用python-docx的add_style以避免customStyle属性）
     styles_element = doc.styles.element
 
@@ -246,8 +306,11 @@ def set_run_font_eastasia(run, font_name):
     rFonts.set(qn('w:eastAsia'), font_name)
 
 
-def add_header_footer(doc):
-    section = doc.sections[0]
+def add_header_footer(doc, section=None, page_number_format='decimal', show_dashes=True):
+    if section is None:
+        section = doc.sections[0]
+    _set_page_numbering(section, page_number_format, start=1)
+
     header = section.header
     header.is_linked_to_previous = False
     hp = header.paragraphs[0]
@@ -269,29 +332,35 @@ def add_header_footer(doc):
     )
     hp_pPr.append(pBdr)
 
-    # 页脚: -N- 格式页码
+    # 页脚：摘要/目录使用小写罗马数字，正文使用 -N- 格式。
     footer = section.footer
     footer.is_linked_to_previous = False
     fp = footer.paragraphs[0]
     fp.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
-    # Add "-" before page number
-    run_dash1 = fp.add_run("-")
-    run_dash1.font.size = Pt(9)
-    run_dash1.font.name = 'Times New Roman'
+    if show_dashes:
+        run_dash1 = fp.add_run("-")
+        run_dash1.font.size = Pt(9)
+        run_dash1.font.name = 'Times New Roman'
 
     # PAGE field
     run_f1 = fp.add_run()
+    run_f1.font.size = Pt(9)
+    run_f1.font.name = 'Times New Roman'
     run_f1._element.append(parse_xml(f'<w:fldChar {nsdecls("w")} w:fldCharType="begin"/>'))
     run_f2 = fp.add_run()
+    run_f2.font.size = Pt(9)
+    run_f2.font.name = 'Times New Roman'
     run_f2._element.append(parse_xml(f'<w:instrText {nsdecls("w")} xml:space="preserve"> PAGE </w:instrText>'))
     run_f3 = fp.add_run()
+    run_f3.font.size = Pt(9)
+    run_f3.font.name = 'Times New Roman'
     run_f3._element.append(parse_xml(f'<w:fldChar {nsdecls("w")} w:fldCharType="end"/>'))
 
-    # Add "-" after page number
-    run_dash2 = fp.add_run("-")
-    run_dash2.font.size = Pt(9)
-    run_dash2.font.name = 'Times New Roman'
+    if show_dashes:
+        run_dash2 = fp.add_run("-")
+        run_dash2.font.size = Pt(9)
+        run_dash2.font.name = 'Times New Roman'
 
 
 def add_heading(doc, text, level, add_toc_bookmark=True, page_break_before=False):
@@ -475,7 +544,7 @@ def _build_toc_entry_xml(text, anchor, page_num, is_level1):
         f'<w:hyperlink w:anchor="{anchor}">'
         f'<w:r>{rpr_text}<w:t xml:space="preserve">{safe_text}</w:t></w:r>'
         f'<w:r>{rpr_page}<w:tab/></w:r>'
-        f'<w:r>{rpr_page}<w:fldChar w:fldCharType="begin"/></w:r>'
+        f'<w:r>{rpr_page}<w:fldChar w:fldCharType="begin" w:dirty="true"/></w:r>'
         f'<w:r>{rpr_page}<w:instrText xml:space="preserve"> PAGEREF {anchor} \\h </w:instrText></w:r>'
         f'<w:r>{rpr_page}<w:fldChar w:fldCharType="separate"/></w:r>'
         f'<w:r>{rpr_page}<w:t>{page_num}</w:t></w:r>'
@@ -512,7 +581,7 @@ def add_toc(doc):
             # 把TOC域开始插入到第一个条目段落的最前面（不创建额外段落）
             fld_sep = parse_xml(f'<w:r {ns}><w:fldChar w:fldCharType="separate"/></w:r>')
             fld_instr = parse_xml(f'<w:r {ns}><w:instrText xml:space="preserve"> TOC \\o "1-2" \\h \\z \\u </w:instrText></w:r>')
-            fld_begin = parse_xml(f'<w:r {ns}><w:fldChar w:fldCharType="begin"/></w:r>')
+            fld_begin = parse_xml(f'<w:r {ns}><w:fldChar w:fldCharType="begin" w:dirty="true"/></w:r>')
             # 插入顺序：begin, instrText, separate（在段落pPr之后、hyperlink之前）
             first_child = entry_elem[0]  # pPr
             first_child.addnext(fld_sep)
@@ -595,14 +664,15 @@ def create_document():
     doc = Document()
 
     # 1. 页面设置
-    print("[1/12] 页面设置...")
+    print("[1/13] 页面设置...")
     setup_page(doc)
     setup_doc_defaults(doc)
     setup_styles(doc)
-    add_header_footer(doc)
+    enable_field_updates(doc)
+    add_header_footer(doc, page_number_format='lowerRoman', show_dashes=False)
 
     # ========== 中文摘要 ==========
-    print("[2/12] 中文摘要...")
+    print("[2/13] 中文摘要...")
     # 标题
     p_title = doc.add_paragraph()
     p_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -667,7 +737,7 @@ def create_document():
     set_run_font_eastasia(run_kv, '宋体')
 
     # ========== English Abstract ==========
-    print("[3/12] English Abstract...")
+    print("[3/13] English Abstract...")
     add_page_break(doc)
 
     # 英文标题
@@ -761,9 +831,19 @@ def create_document():
     global _toc_bookmark_counter
     _toc_bookmark_counter = 0
 
+    # 正文单独分节，页码从 -1- 重新开始。
+    body_section = doc.add_section(WD_SECTION.NEW_PAGE)
+    _setup_section_page(body_section)
+    add_header_footer(
+        doc,
+        section=body_section,
+        page_number_format='decimal',
+        show_dashes=True,
+    )
+
     # ========== 第1章 绪论 ==========
     print("[5/13] 第1章 绪论...")
-    add_heading(doc, "第1章 绪论", level=1, page_break_before=True)
+    add_heading(doc, "第1章 绪论", level=1)
     for section_title, paragraphs in CH1_SECTIONS.items():
         add_heading(doc, section_title, level=2)
         for para in paragraphs:
@@ -873,8 +953,9 @@ def create_document():
     core.language = ''
     core.version = ''
     core.revision = 1
-    core.created = datetime.datetime.now()
-    core.modified = datetime.datetime.now()
+    now_utc = datetime.datetime.now(datetime.timezone.utc)
+    core.created = now_utc
+    core.modified = now_utc
     # 替换/清空 app.xml 元数据，避免留下生成工具、公司或管理者信息
     app_part = doc.part.package.part_related_by(RT.EXTENDED_PROPERTIES)
     if app_part is not None:
